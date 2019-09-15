@@ -141,7 +141,10 @@ disable=print-statement,
         comprehension-escape,
         no-self-use,
         too-few-public-methods,
-        fixme
+        fixme,
+        too-many-locals,
+        too-many-branches,
+        too-many-statements
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -203,7 +206,7 @@ indent-after-paren=4
 indent-string='    '
 
 # Maximum number of characters on a single line.
-max-line-length=100
+max-line-length=80
 
 # Maximum number of lines in a module.
 max-module-lines=1000

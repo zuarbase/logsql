@@ -86,14 +86,23 @@ class LogPath:
             # file change/rotation, read all remaining data.
             self._read_last_chunk()
             self.offsetfile.reset(inode=inode)
-            self.offsetfile.save()
+
+            if inode != -1:
+                self.offsetfile.save()
 
             self.filp.close()
-            self.filp = open(self.path, "rb")
+
+            if inode != -1:
+                self.filp = open(self.path, "rb")
+            else:
+                self.filp = None
 
         # Cached line, nothing else is changed
         if self.lines:
             return self.lines.pop(0)
+
+        if self.filp is None:
+            raise FileNotFoundError(self.path)
 
         self.buffer += self.filp.read()
 

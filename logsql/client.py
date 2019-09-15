@@ -6,6 +6,7 @@ import sys
 import argparse
 import time
 import logging
+import json
 
 import docker
 import sqlalchemy
@@ -14,6 +15,9 @@ from sqlalchemy.pool import NullPool
 from logsql import models, settings, utils
 from logsql.logpath import LogPath
 from logsql.offsetfile import OffsetFile
+from logsql.transform import transform
+
+DEFAULT_BATCH_SIZE = 10000
 
 
 def main(
@@ -22,9 +26,16 @@ def main(
     """ The main entry point for the child subprocess that is run for a
     given log file
     """
+
     client = docker.from_env()
     info = client.api.inspect_container(args.id)
     run_once = getattr(args, "run_once", False)
+
+    batch_size = getattr(args, "batch_size")
+    if not batch_size:
+        batch_size = DEFAULT_BATCH_SIZE
+
+    done = False
 
     name = info["Name"]
     if len(name) > 128:
@@ -53,27 +64,41 @@ def main(
     utils.containers_chown(path)
 
     log_path = LogPath(path)
-    while True:
+    while not done:
         lines = []
         while True:
-            line = log_path.readline()
+            line = None
+            try:
+                line = log_path.readline()
+            except FileNotFoundError:
+                logging.info("FileNotFound %s, container likely removed", path)
+                done = True
             if not line:
                 break
-            lines.append(line)
-            logging.debug("LINE: %s", line)
+
+            # assumes json formatting
+            data = transform(info["Name"], json.loads(line))
+            if not data:
+                continue
+
+            lines.append(data)
+            logging.debug("LINE: %s", str(data))
+
+            if len(lines) >= batch_size:
+                break
 
         if not lines:
             if run_once:
-                return log_path
+                return log_path  # pragma: no coverage
             logging.debug("sleep")
             time.sleep(args.interval)
             continue
 
         logs = []
 
-        for line in lines:
+        for data in lines:
             log = models.Log(
-                container_id=args.id, container_name=name, json=line
+                container_id=args.id, container_name=name, json=data
             )
             session.add(log)
             logs.append(log)
@@ -87,6 +112,11 @@ def main(
 
         log_path.commit()
 
+        if run_once:
+            return log_path
+
+    return 0
+
 
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser()
@@ -94,5 +124,6 @@ if __name__ == "__main__":
     PARSER.add_argument("--debug", action="store_true", default=False)
     PARSER.add_argument("--interval", default=1.0)
     PARSER.add_argument("--reset", action="store_true", default=False)
+    PARSER.add_argument("--batch-size", default=DEFAULT_BATCH_SIZE)
 
     sys.exit(main(PARSER.parse_args()))

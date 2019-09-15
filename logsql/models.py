@@ -1,7 +1,6 @@
 """ Database model(s) """
 
 import datetime
-import json
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
@@ -49,6 +48,6 @@ class Log(BASE):
             "id": self.id,
             "container_id": self.container_id,
             "container_name": self.container_name,
-            "json": json.loads(self.json),
+            "json": self.json,
             "created_at": self.created_at.isoformat()
         }

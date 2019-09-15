@@ -1,0 +1,13 @@
+version: "3"
+services:
+  logsql:
+    container_name: logsql
+    build:
+      context: .
+    image: 575296055612.dkr.ecr.us-east-1.amazonaws.com/logsql:latest
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker:/var/lib/docker
+    env_file:
+      - .env

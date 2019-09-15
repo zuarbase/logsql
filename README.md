@@ -4,7 +4,7 @@
 Create a file named `/etc/sudoers.d/logsql` with the following contents:
 
 ```
-matt ALL=(ALL) NOPASSWD: chown -R matt /var/lib/docker/containers
+matt ALL=(ALL) NOPASSWD: /bin/chown -R matt /var/lib/docker/containers
 ```
 
 where:
@@ -19,6 +19,7 @@ sudo chmod 0440 /etc/sudoers.d/logsql
 Create the database that logsql will use, e.g for Postgresql:
 ```bash
 createdb logsql
+createdb logsql_test   # for testing
 ```
 
 

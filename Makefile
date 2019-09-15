@@ -24,12 +24,21 @@ docs:
 .PHONY: docs
 
 coverage:
-	pytest --cov=logsql --cov-report=term-missing --cov-fail-under=100 tests/
+	pytest -xv --cov=logsql --cov-report=term-missing --cov-fail-under=100 tests/
 .PHONY: coverage
 
 wheel:
 	python3 setup.py sdist bdist_wheel
 .PHONY: wheel
+
+pyenv:
+	virtualenv -p python3 pyenv
+	pyenv/bin/pip3 install -e .[prod]
+.PHONY: pyenv
+
+freeze:
+	pyenv/bin/pip3 freeze | egrep -v -i "auth|flake8|pylint|pytest|docker-compose|pkg-resources|sphinx|logsql" > requirements.txt
+.PHONY: freeze
 
 clean:
 	rm -rf build dist *.egg-info docs/build

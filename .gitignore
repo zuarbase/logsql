@@ -31,3 +31,6 @@ pyenv
 
 # docs
 /docs/build
+
+# Coverage
+.coverage*

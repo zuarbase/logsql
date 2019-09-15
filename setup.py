@@ -27,5 +27,9 @@ setup(
             "sphinx",
             "sphinxcontrib-napoleon",
         ],
+        "prod": [
+            "psycopg2-binary",
+            "docker-compose",
+        ]
     }
 )

@@ -222,6 +222,27 @@ def test_main_manually_add_container(docker_client, session, mocker):
     mocked_add_container.assert_called_with(logger.container.id)
 
 
+def test_main_poll_container(logger, session, mocker):
+    args = Dict({
+        "debug": False,
+        "interval": .1
+    })
+
+    done = False
+
+    def _side_effect(*_args, **_kwargs):
+        nonlocal done
+        if not done:
+            done = True
+            return None
+        raise SystemExit()
+
+    mocked_poll = mocker.patch("subprocess.Popen.poll")
+    mocked_poll.side_effect = _side_effect
+
+    main(args)
+
+
 def test_init(mocker):
     mocker.patch.object(__main__, "main", return_value=42)
     mocker.patch.object(__main__, "__name__", "__main__")

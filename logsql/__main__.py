@@ -79,10 +79,12 @@ class Monitor:
 
 def _should_add_container(
         monitor: Monitor,
-        container: Container
+        container: Container,
+        level=logging.DEBUG,
 ) -> bool:
     if "logsql" in container.name.lower():
-        logging.info(
+        logging.log(
+            level,
             "Skipping container %s [%s]",
             container.name, container.id
         )
@@ -119,7 +121,9 @@ def main(args):
 
         for container in monitor.docker_client.containers.list(all=True):
             if container.id not in monitor.clients:
-                if _should_add_container(monitor, container):
+                if _should_add_container(
+                        monitor, container, level=logging.INFO
+                ):
                     logging.info(
                         "Add container %s [%s]",
                         container.name, container.id
@@ -139,6 +143,13 @@ def main(args):
                             container.name, container.id
                         )
                         monitor.add_container(container.id)
+
+            for container_id, process in monitor.clients.items():
+                if process.poll() is None:
+                    logging.debug(
+                        "Process %s is still running", str(container_id)
+                    )
+                    continue
 
     except SystemExit:
         logging.info("SIGTERM, exiting ...")
